@@ -232,6 +232,7 @@ impl AssetLoader for LdtkProjectLoader {
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
+            // Create custom loader with my algorithm in a custom laoder
             let mut bytes = Vec::new();
             reader.read_to_end(&mut bytes).await?;
             let data: LdtkJson = serde_json::from_slice(&bytes)?;
