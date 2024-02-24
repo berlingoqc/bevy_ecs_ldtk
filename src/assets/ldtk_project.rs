@@ -17,6 +17,7 @@ use derive_more::From;
 use path_clean::PathClean;
 use std::collections::HashMap;
 use thiserror::Error;
+use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "internal_levels")]
 use crate::assets::InternalLevels;
@@ -174,9 +175,25 @@ pub enum LdtkProjectLoaderError {
     ExternalLevelWithNullPath,
 }
 
+#[derive(Clone, Debug, PartialEq, From, Reflect, Serialize, Deserialize)]
+pub enum Value {
+    Str(String),
+    Int(i32),
+    Bool(bool),
+}
+
+pub type LdtkJsonTransform = Box<dyn Fn(LdtkJson, HashMap<String, Value>) -> LdtkJson + Sync + Send + 'static>;
+
+#[derive(Clone, Debug, PartialEq, From, Getters, Asset, Reflect, Default, Serialize, Deserialize)]
+pub struct LdtkProjectLoaderSettings {
+    pub data: HashMap<String, Value>
+}
+
 /// AssetLoader for [`LdtkProject`].
 #[derive(Default)]
-pub struct LdtkProjectLoader;
+pub struct LdtkProjectLoader {
+    pub callback: Option<LdtkJsonTransform>,
+}
 
 fn load_level_metadata(
     load_context: &mut LoadContext,
@@ -222,20 +239,25 @@ fn load_external_level_metadata(
 
 impl AssetLoader for LdtkProjectLoader {
     type Asset = LdtkProject;
-    type Settings = ();
+    type Settings = LdtkProjectLoaderSettings;
     type Error = LdtkProjectLoaderError;
 
     fn load<'a>(
         &'a self,
         reader: &'a mut Reader,
-        _settings: &'a Self::Settings,
+        settings: &'a Self::Settings,
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
             // Create custom loader with my algorithm in a custom laoder
             let mut bytes = Vec::new();
             reader.read_to_end(&mut bytes).await?;
-            let data: LdtkJson = serde_json::from_slice(&bytes)?;
+            let mut data: LdtkJson = serde_json::from_slice(&bytes)?;
+
+            let transform_data = self.callback.as_ref().map(|callback| callback(data.clone(), settings.data.clone()));
+            if transform_data.is_some() {
+                data = transform_data.unwrap();
+            }
 
             let mut tileset_map: HashMap<i32, Handle<Image>> = HashMap::new();
             for tileset in &data.defs.tilesets {
