@@ -1,6 +1,6 @@
 #[cfg(feature = "external_levels")]
 use crate::assets::{ldtk_external_level::LdtkExternalLevelLoader, LdtkExternalLevel};
-use crate::{assets::{ldtk_project::LdtkProjectLoader, LdtkProject}, ldtk::LdtkJson};
+use crate::assets::{ldtk_project::LdtkProjectLoader, LdtkProject};
 use bevy::prelude::*;
 
 /// Plugin that registers LDtk-related assets.

@@ -175,18 +175,11 @@ pub enum LdtkProjectLoaderError {
     ExternalLevelWithNullPath,
 }
 
-#[derive(Clone, Debug, PartialEq, From, Reflect, Serialize, Deserialize)]
-pub enum Value {
-    Str(String),
-    Int(i32),
-    Bool(bool),
-}
+pub type LdtkJsonTransform = Box<dyn Fn(LdtkJson, serde_json::Map<String, serde_json::Value>) -> LdtkJson + Sync + Send + 'static>;
 
-pub type LdtkJsonTransform = Box<dyn Fn(LdtkJson, HashMap<String, Value>) -> LdtkJson + Sync + Send + 'static>;
-
-#[derive(Clone, Debug, PartialEq, From, Getters, Asset, Reflect, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, From, Default, Serialize, Deserialize)]
 pub struct LdtkProjectLoaderSettings {
-    pub data: HashMap<String, Value>
+    pub data: serde_json::Map<String, serde_json::Value>
 }
 
 /// AssetLoader for [`LdtkProject`].

@@ -33,7 +33,7 @@ mod ldtk_project_data;
 pub use ldtk_project_data::LdtkProjectData;
 
 mod ldtk_project;
-pub use ldtk_project::{LdtkProject, LdtkProjectLoader, Value, LdtkProjectLoaderSettings};
+pub use ldtk_project::{LdtkProject, LdtkProjectLoader, LdtkProjectLoaderSettings};
 
 mod level_indices;
 pub use level_indices::LevelIndices;

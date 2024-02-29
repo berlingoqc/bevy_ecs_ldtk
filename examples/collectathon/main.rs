@@ -1,11 +1,24 @@
 use bevy::prelude::*;
 use bevy_ecs_ldtk::ldtk::LdtkJson;
 use bevy_ecs_ldtk::prelude::*;
-use bevy_ecs_ldtk::assets::{LdtkProjectLoaderSettings, LdtkProjectLoader, Value};
+use bevy_ecs_ldtk::assets::{LdtkProjectLoaderSettings, LdtkProjectLoader};
+
+use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
 
 mod coin;
 mod player;
 mod respawn;
+
+
+static SEED: i32 = 12345;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MyConfigStruct {
+    pub seed: i32,
+}
 
 pub fn map_generation(mut map_json: LdtkJson) -> Result<LdtkJson, ()> {
     
@@ -21,10 +34,11 @@ pub fn map_generation(mut map_json: LdtkJson) -> Result<LdtkJson, ()> {
 fn main() {
     let loader = LdtkProjectLoader{
         callback: Some(Box::new(|map_json, config| {
-            let v = config.get("value").unwrap();
-            if let Value::Int(seed) = v {
-                println!("config passed down for generation {}", seed);
-            }
+            let config: MyConfigStruct = serde_json::from_value(serde_json::Value::Object(config))
+                    .expect("Failed to convert value to struct");
+
+            println!("{:#?}",config);
+
             map_generation(map_json).unwrap()
          })),
     };
@@ -55,7 +69,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(camera);
 
     let ldtk_handle = asset_server.load_with_settings("collectathon.ldtk", |s: &mut LdtkProjectLoaderSettings| {
-        s.data.insert("value".into(), Value::Int(24242));
+        let config = MyConfigStruct {
+            seed: SEED,
+        };
+
+        s.data = serde_json::to_value(&config)
+            .expect("Failed to convert struct to value")
+            .as_object()
+            .expect("Failed to convert value to object")
+            .clone();
     });
 
     commands.spawn(LdtkWorldBundle {
