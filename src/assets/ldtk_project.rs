@@ -15,9 +15,9 @@ use bevy::{
 use derive_getters::Getters;
 use derive_more::From;
 use path_clean::PathClean;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
-use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "internal_levels")]
 use crate::assets::InternalLevels;
@@ -175,11 +175,16 @@ pub enum LdtkProjectLoaderError {
     ExternalLevelWithNullPath,
 }
 
-pub type LdtkJsonTransform = Box<dyn Fn(LdtkJson, serde_json::Map<String, serde_json::Value>) -> LdtkJson + Sync + Send + 'static>;
+pub type LdtkJsonTransform = Box<
+    dyn Fn(LdtkJson, serde_json::Map<String, serde_json::Value>) -> LdtkJson
+        + Sync
+        + Send
+        + 'static,
+>;
 
 #[derive(Clone, Debug, PartialEq, From, Default, Serialize, Deserialize)]
 pub struct LdtkProjectLoaderSettings {
-    pub data: serde_json::Map<String, serde_json::Value>
+    pub data: serde_json::Map<String, serde_json::Value>,
 }
 
 /// AssetLoader for [`LdtkProject`].
@@ -247,7 +252,10 @@ impl AssetLoader for LdtkProjectLoader {
             reader.read_to_end(&mut bytes).await?;
             let mut data: LdtkJson = serde_json::from_slice(&bytes)?;
 
-            let transform_data = self.callback.as_ref().map(|callback| callback(data.clone(), settings.data.clone()));
+            let transform_data = self
+                .callback
+                .as_ref()
+                .map(|callback| callback(data.clone(), settings.data.clone()));
             if transform_data.is_some() {
                 data = transform_data.unwrap();
             }

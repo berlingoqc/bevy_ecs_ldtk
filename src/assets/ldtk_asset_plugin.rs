@@ -7,11 +7,8 @@ use bevy::prelude::*;
 #[derive(Copy, Clone, Debug, Default)]
 pub struct LdtkAssetPlugin;
 
-
 impl Plugin for LdtkAssetPlugin {
     fn build(&self, app: &mut App) {
-
-
         app.init_asset::<LdtkProject>()
             //.register_asset_loader(loader);
             .init_asset_loader::<LdtkProjectLoader>();
